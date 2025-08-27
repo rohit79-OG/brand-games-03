@@ -1765,7 +1765,8 @@ const gameState = {
     animationFrame: null, // MOVEMENT SYSTEM
     level: 1,                   
     challengeCode: null,       
-    perfectRounds: 0,          
+    perfectRounds: 0, 
+    actualPlayTime: 0,         
     sessionId: Date.now(),
 
     cleanup() {
@@ -1832,7 +1833,7 @@ const gameState = {
     }
 
   },
-    
+ 
     reset() {
     this.cleanup();
     this.score = 0;
@@ -1852,7 +1853,6 @@ const gameState = {
     if (typeof achievementSystem !== 'undefined') {
         achievementSystem.reset();
     }
-
     // PHASE 3C: Reset analytics tracking for new game
     if (typeof analyticsSystem !== 'undefined') {
     analyticsSystem.reset();
@@ -1860,6 +1860,11 @@ const gameState = {
     console.log('🔄 Game state reset');
 }
 };
+
+// Game activity utility function with global access
+function isGameActive() {
+    return gameState.gameRunning && !gameState.gameEnding;
+}
 
 // ========================================================================
 // PROGRESSIVE SILHOUETTE SYSTEM
@@ -1950,7 +1955,7 @@ const distractionTypes = [
     { icon: '🐕', urgency: 'medium', points: 11, timeout: gameState.isMobile ? 1600 : 1800, name: 'pet_needs', type: 'standard' },
     { icon: '📅', urgency: 'medium', points: 13, timeout: gameState.isMobile ? 1600 : 1800, name: 'calendar', type: 'standard' },
     
-    // EXISTING LOW URGENCY - Keep same for both
+    // EXISTING LOW URGENCY 
     { icon: '📺', urgency: 'low', points: 8, timeout: 2100, name: 'tv', type: 'standard' },             
     { icon: '🎵', urgency: 'low', points: 7, timeout: 2100, name: 'music', type: 'standard' },          
     { icon: '📰', urgency: 'low', points: 6, timeout: 2100, name: 'news', type: 'standard' },           
@@ -1961,12 +1966,12 @@ const distractionTypes = [
     { icon: '🌙', urgency: 'low', points: 5, timeout: 2100, name: 'sleepy', type: 'standard' },
     { icon: '📚', urgency: 'low', points: 7, timeout: 2100, name: 'reading', type: 'standard' },
           
-    // EXISTING TROPHIES - Keep same
+    // EXISTING TROPHIES 
     { icon: '🏆', urgency: 'high', points: 50, timeout: 2500, name: 'trophy_gold', type: 'trophy' },     
     { icon: '🎯', urgency: 'medium', points: 35, timeout: 2500, name: 'trophy_target', type: 'trophy' },  
     { icon: '💎', urgency: 'high', points: 75, timeout: 2500, name: 'trophy_diamond', type: 'trophy' },  
     
-    // EXISTING STICKY NOTES - Keep same
+    // EXISTING STICKY NOTES 
     { icon: 'URGENT!', urgency: 'medium', points: 25, timeout: 3000, name: 'sticky_urgent', type: 'sticky' },   
     { icon: 'Meeting', urgency: 'low', points: 20, timeout: 3000, name: 'sticky_meeting', type: 'sticky' },     
     { icon: 'Call Mom', urgency: 'low', points: 15, timeout: 3000, name: 'sticky_personal', type: 'sticky' }    
@@ -2083,9 +2088,9 @@ function updateLoadingTip() {
     }
 }
 
-// ========================================================================
-// AUDIO SYSTEM WITH BACKGROUND MUSIC AND MOVEMENT SOUNDS
-// ========================================================================
+// =============
+// AUDIO SYSTEM 
+// ============
 const audioManager = {
     audioContext: null,
     sounds: {},
@@ -2121,7 +2126,6 @@ const audioManager = {
             this.initBackgroundMusic();
             this.isInitialized = true;
             
-            console.log('✅ Audio system ready with background music');
         } catch (error) {
             console.error('❌ Audio initialization failed:', error);
         }
@@ -2135,7 +2139,7 @@ const audioManager = {
         
         if (this.audioContext && this.audioContext.state === 'suspended') {
             await this.audioContext.resume();
-            console.log('🎵 Audio context resumed on interaction');
+    
         }
     },
     
@@ -2322,7 +2326,6 @@ generateSounds() {
         };
     });
     
-    console.log('✅ Audio system with movement sounds ready');
 },
 
 // Sound engine with stereo and modern effects 
@@ -2568,18 +2571,6 @@ async play(soundName, context = 'normal') {
     }
 },
 
-// Play sound with proper error handling 
-playSound(soundName, volume = 1.0) {
-    console.log(`🔊 playSound called: ${soundName} at volume ${volume}`);
-
-    // Use the existing play method which has proper error handling
-    if (this.play) {
-        return this.play(soundName, 'playSound-call');
-    } else {
-        console.log(`🔇 No play method available for ${soundName}`);
-    }
-}, 
-
 // Adjust music volume
 adjustMusicVolume(volume) {
     this.settings.musicVolume = Math.max(0, Math.min(1, volume));
@@ -2785,7 +2776,7 @@ const particleSystem = {
             this.ctx.globalAlpha = particle.life;
             this.ctx.fillStyle = particle.color;
             this.ctx.shadowColor = particle.color;
-            this.ctx.shadowBlur = 10; // ADD glow effect
+            this.ctx.shadowBlur = 10; //glow effect
             this.ctx.beginPath();
             this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
             this.ctx.fill();
@@ -2800,7 +2791,7 @@ const particleSystem = {
             this.ctx.globalAlpha = particle.life;
             this.ctx.strokeStyle = particle.color;
             this.ctx.shadowColor = particle.color;
-            this.ctx.shadowBlur = 15; // ADD glow
+            this.ctx.shadowBlur = 15; // glow
             this.ctx.lineWidth = 4; // THICKER lines
             this.ctx.beginPath();
             this.ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
@@ -2856,7 +2847,7 @@ const particleSystem = {
 };
 
 // ========================================================================
-// PHASE 3C: SCREEN SHAKE SYSTEM - DRAMATIC IMPACT FEEDBACK
+// SCREEN SHAKE SYSTEM - DRAMATIC IMPACT FEEDBACK
 // ========================================================================
 const screenShake = {
     isShaking: false,
@@ -3171,7 +3162,7 @@ updateSliding(distraction, rect, screenRect) {
         
         if (newX <= screenRect.left || newX + rect.width >= screenRect.right) {
             data.direction *= -1;
-            audioManager.playSound('bounce');
+            audioManager.play('bounce', 'movement');
         }
         
         distraction.style.left = (newX - screenRect.left) + 'px';
@@ -3180,7 +3171,7 @@ updateSliding(distraction, rect, screenRect) {
         
         if (newY <= screenRect.top || newY + rect.height >= screenRect.bottom) {
             data.direction *= -1;
-            audioManager.playSound('bounce');
+            audioManager.play('bounce', 'movement');
         }
         
         distraction.style.top = (newY - screenRect.top) + 'px';
@@ -3195,12 +3186,12 @@ updateBouncing(distraction, rect, screenRect) {
     
     if (newX <= screenRect.left || newX + rect.width >= screenRect.right) {
         data.velocityX *= -1;
-        audioManager.playSound('bounce');
+        audioManager.play('bounce', 'movement');
     }
     
     if (newY <= screenRect.top || newY + rect.height >= screenRect.bottom) {
         data.velocityY *= -1;
-        audioManager.playSound('bounce');
+        audioManager.play('bounce', 'movement');
     }
     
     distraction.style.left = Math.max(0, Math.min(newX - screenRect.left, screenRect.width - rect.width)) + 'px';
@@ -3255,7 +3246,7 @@ updatePhantom(distraction, rect, screenRect) {
         data.teleportTimer = 0;
         data.teleportInterval = 800 + Math.random() * 400;
         
-        audioManager.playSound('teleport');
+        audioManager.play('teleport', 'movement');
     }
 },
 
@@ -3264,11 +3255,12 @@ onDistractionRemoved(distraction) {
         this.currentMovingCount--;
         
         if (distraction.movementType === 'phantom') {
-            audioManager.playSound('phantomWhisper');
+            audioManager.play('phantomWhisper', 'movement');
         }
     }
 }
 };
+
 function getRandomDistractionType() {
     const random = Math.random();
     
@@ -3277,7 +3269,7 @@ function getRandomDistractionType() {
         const trophyTypes = distractionTypes.filter(type => type.type === 'trophy');
         if (trophyTypes.length > 0) {
             const selectedTrophy = trophyTypes[Math.floor(Math.random() * trophyTypes.length)];
-            console.log(`✨ RARE TROPHY: ${selectedTrophy.name} (+${selectedTrophy.points} pts)`);
+            console.log(`RARE TROPHY: ${selectedTrophy.name} (+${selectedTrophy.points} pts)`);
             return selectedTrophy;
         }
     }
@@ -3295,7 +3287,7 @@ function getRandomDistractionType() {
     return standardTypes[Math.floor(Math.random() * standardTypes.length)];
 }
 // ========================================================================
-// PHASE 3C: ANIMATED BACKGROUND SYSTEM - SUBTLE MOVING STARS
+// ANIMATED BACKGROUND SYSTEM - SUBTLE MOVING STARS
 // ========================================================================
 const backgroundEffects = {
     canvas: null,
@@ -3496,7 +3488,7 @@ window.addEventListener('resize', () => {
 });
 
 // ========================================================================
-// PHASE 3C: ACHIEVEMENT SYSTEM - 8 ACHIEVEMENTS
+// ACHIEVEMENT SYSTEM - 8 ACHIEVEMENTS
 // ========================================================================
 const achievementSystem = {
     achievements: {
@@ -3824,7 +3816,7 @@ const achievementSystem = {
 };
 
 // ========================================================================
-// PHASE 3C: ANALYTICS SYSTEM - DETAILED PERFORMANCE METRICS
+//  ANALYTICS SYSTEM - DETAILED PERFORMANCE METRICS
 // ========================================================================
 const analyticsSystem = {
     sessionData: {
@@ -4617,13 +4609,13 @@ async function startGame() {
     // Initialize Three.js system
     threeManager.init();
     
-    // PHASE 3C: Initialize animated background
+    // Initialize animated background
     backgroundEffects.init();
 
-    // PHASE 3C: Initialize achievement system
+    // Initialize achievement system
     achievementSystem.init();
 
-    // PHASE 3C: Initialize nalytics system
+    // Initialize analytics system
     analyticsSystem.init();
     
     updateProgressiveSilhouette(0);
@@ -4643,8 +4635,7 @@ async function startGame() {
 
 // Game loop for movement updates
 function gameLoop() {
-    if (!gameState.gameRunning) return;
-    
+    if (!isGameActive()) return;
     // Update all distraction movements
     distractionMovement.updateMovements();
     
@@ -4653,8 +4644,8 @@ function gameLoop() {
 }
 
 function spawnDistraction() {
-    if (!gameState.gameRunning || gameState.gameEnding) {
-        console.log('🛑 Not spawning - game not running');
+    if (!isGameActive()) {
+        console.log('🛑 Not spawning - game not active');
         return;
     }
     
@@ -4664,7 +4655,7 @@ function spawnDistraction() {
         timerManager.lastSpawnAttempt = Date.now();
         
         timerManager.spawnInterval = setInterval(() => {
-            if (!gameState.gameRunning || gameState.gameEnding) {
+            if (!isGameActive()) {
                 clearInterval(timerManager.spawnInterval);
                 timerManager.spawnInterval = null;
                 timerManager.spawnIntervalInitialized = false;
@@ -4692,7 +4683,7 @@ function spawnDistraction() {
 
 // Extract spawn logic to separate function to avoid duplication
 function attemptSpawn() {
-    if (!gameState.gameRunning || gameState.gameEnding) {
+    if (!isGameActive()) {
         return;
     }
     
@@ -5128,8 +5119,8 @@ function eliminateDistraction(distraction, distractionType) {
             // Standard elimination sound
             if (audioManager.play) {
                 audioManager.play('eliminate', 'normal');
-            } else if (audioManager.playSound) {
-                audioManager.playSound('eliminate');
+            } else if (audioManager.play) {
+                audioManager.play('eliminate');
             }
             console.log(`🎵 Playing eliminate sound`);
         }
@@ -5139,8 +5130,8 @@ function eliminateDistraction(distraction, distractionType) {
             setTimeout(() => {
                 if (audioManager.play) {
                     audioManager.play('combo', 'combo');
-                } else if (audioManager.playSound) {
-                    audioManager.playSound('combo');
+                } else if (audioManager.play) {
+                    audioManager.play('combo');
                 }
                 console.log(`🎵 Playing combo sound for combo x${gameState.combo}`);
             }, 50);
@@ -5151,8 +5142,8 @@ function eliminateDistraction(distraction, distractionType) {
             setTimeout(() => {
                 if (audioManager.play) {
                     audioManager.play('highScore');
-                } else if (audioManager.playSound) {
-                    audioManager.playSound('highScore');
+                } else if (audioManager.play) {
+                    audioManager.play('highScore');
                 }
                 console.log(`🎵 Playing high score sound`);
             }, 100);
@@ -5324,7 +5315,7 @@ function failDistraction(distraction) {
 }
 
 function checkGameCompletion() {
-    if (!gameState.gameRunning || gameState.gameEnding) {
+    if (!isGameActive()) {
         return;
     }
     
@@ -5373,24 +5364,24 @@ function endGame() {
     gameState.cleanup();
     
     const playTime = Math.floor((Date.now() - gameState.gameStartTime) / 1000);
+    gameState.actualPlayTime = playTime; // Store actual play time for sharing
+
     const accuracy = gameState.totalDistractions > 0 ? 
         ((gameState.eliminatedDistractions / gameState.totalDistractions) * 100).toFixed(1) : 0;
 
     // PHASE 3C: End analytics session and generate insights
     const sessionReport = analyticsSystem.endSession(gameState.score);
 
-    let message = `Your embrace lasted ${playTime} seconds!\n`;
-    message += `Accuracy: ${accuracy}% (${gameState.eliminatedDistractions}/${gameState.totalDistractions})\n`;
-
-    if (gameState.score >= 500) {
-        message += "LEGENDARY performance! Master of Focus! 🏆";
-    } else if (gameState.score >= 200) {
-        message += "Excellent focus! You're getting stronger! 💪";
-    } else if (gameState.score >= 100) {
-        message += "Great improvement! Keep practicing! 📈";
-    } else {
-        message += "Every master started as a beginner! 🌟";
-    }
+    // Generate contextual performance message with all game stats
+    const message = generateContextualPerformanceMessage(
+        playTime,
+        accuracy,
+        gameState.score,
+        gameState.eliminatedDistractions,
+        gameState.totalDistractions,
+        gameState.combo || 0,
+        gameState.lives || 0
+    );
     
     document.getElementById('finalScore').textContent = gameState.score;
     document.getElementById('performanceMessage').textContent = message;
@@ -5594,7 +5585,7 @@ function showMilestoneNotification(milestone) {
     audioManager.play('milestone', 'achievement');
     particleSystem.createMilestoneCelebration();
 
-    // PHASE 3C: MILESTONE SCREEN SHAKE - CELEBRATION FEEDBACK
+    // MILESTONE SCREEN SHAKE - CELEBRATION FEEDBACK
     screenShake.milestone();
     console.log(`📳 Milestone celebration shake: ${milestone.name}`);
     
@@ -5638,6 +5629,84 @@ function showGameplayMessage(text, subtext = '') {
     messageSystem.showMessage(content, 'info', 2000);
 }
 
+// ========================================================================
+// CONTEXTUAL PERFORMANCE MESSAGE SYSTEM 
+// ========================================================================
+function generateContextualPerformanceMessage(playTime, accuracy, score, eliminatedDistractions, totalDistractions, combo, lives) {
+    let message = `Your embrace lasted ${playTime} seconds!\n`;
+    message += `Accuracy: ${accuracy}% (${eliminatedDistractions}/${totalDistractions})\n`;
+
+    // Primary scoring tiers with enhanced granularity
+    let performanceLevel = "";
+    let performanceEmoji = "";
+    
+    if (score >= 1500) {
+        performanceLevel = "MASTER-LEVEL focus! Outstanding performance!";
+        performanceEmoji = "⚡";
+    } else if (score >= 1200) {
+        performanceLevel = "EXPERT-TIER performance! Nearly mastered!";
+        performanceEmoji = "💎";
+    } else if (score >= 900) {
+        performanceLevel = "SKILLED performance! You're in the zone!";
+        performanceEmoji = "🔥";
+    } else if (score >= 600) {
+        performanceLevel = "STRONG focus! Impressive improvement!";
+        performanceEmoji = "💪";
+    } else if (score >= 500) {
+        performanceLevel = "LEGENDARY performance! Master of Focus!";
+        performanceEmoji = "🏆";
+    } else if (score >= 200) {
+        performanceLevel = "Excellent focus! You're getting stronger!";
+        performanceEmoji = "💪";
+    } else if (score >= 100) {
+        performanceLevel = "Great improvement! Keep practicing!";
+        performanceEmoji = "📈";
+    } else {
+        performanceLevel = "Every master started as a beginner! Keep going!";
+        performanceEmoji = "🌟";
+    }
+
+    message += performanceLevel + " " + performanceEmoji;
+
+    // Add contextual bonuses for exceptional performance
+    const contextualMessages = [];
+    
+    if (accuracy >= 95 && eliminatedDistractions > 10) {
+        contextualMessages.push("Perfect precision!");
+    } else if (accuracy >= 85 && eliminatedDistractions > 15) {
+        contextualMessages.push("Excellent accuracy!");
+    }
+    
+    if (combo >= 10) {
+        contextualMessages.push(`Epic ${combo}x combo!`);
+    } else if (combo >= 5) {
+        contextualMessages.push(`Great ${combo}x combo streak!`);
+    }
+    
+    if (lives === 5 && score >= 300) {
+        contextualMessages.push("Flawless execution!");
+    } else if (lives >= 4 && score >= 200) {
+        contextualMessages.push("Nearly flawless!");
+    }
+    
+    if (playTime >= 120) {
+        contextualMessages.push("Amazing endurance!");
+    } else if (playTime >= 90) {
+        contextualMessages.push("Great stamina!");
+    }
+
+    // Special achievement combinations
+    if (accuracy >= 90 && combo >= 8 && lives >= 4) {
+        contextualMessages.push("Triple threat mastery!");
+    }
+
+    if (contextualMessages.length > 0) {
+        message += "\n" + contextualMessages.join(" ");
+    }
+
+    return message;
+}
+
 function triggerSilhouetteReaction(type = 'safe') {
     const silhouette = document.getElementById('coupleSilhouette');
     if (!silhouette) return;
@@ -5663,7 +5732,7 @@ function triggerSilhouetteReaction(type = 'safe') {
         }
         
     } else {
-        // EXISTING REACTION TYPES (unchanged)
+        // REACTION TYPES 
         const reactionClass = `reaction-${type}`;
         silhouette.classList.add(reactionClass);
         console.log(`✅ Applied class: ${reactionClass}`);
@@ -5807,10 +5876,10 @@ function executeBodyLevelTear(tearData) {
     // Hide original image
     imageElement.style.opacity = '0';
     
-    // ENHANCEMENT 2: Synchronized sound effects
+    // Synchronized sound effects
     playTearSoundSequence(tearIntensity);
     
-    // PHASE 2: Animate separation with progressive intensity
+    // Animate separation with progressive intensity
     setTimeout(() => {
         // VERIFY TEAR STILL EXISTS (prevents race conditions)
         if (!document.getElementById(tearId)) {
@@ -5825,13 +5894,13 @@ function executeBodyLevelTear(tearData) {
         rightHalf.style.transform = `translate(${tearIntensity.separation}px, 0) rotate(${tearIntensity.rotation}deg)`;
         rightHalf.style.filter = `brightness(${tearIntensity.brightness}) drop-shadow(-8px 0 15px rgba(0, 0, 0, 0.7))`;
         
-        // ENHANCEMENT 3: Particle effects during separation
+        // Particle effects during separation
         createTearParticleEffects(imageRect, tearIntensity);
         
         console.log(`💥 Phase 2: JAGGED TEAR separation - ${tearIntensity.separation}px gap, ${tearIntensity.rotation}° rotation!`);
     }, 50);
     
-    // PHASE 3: FASTER Restoration - WITH STATE CHECK
+    // FASTER Restoration - WITH STATE CHECK
     setTimeout(() => {
         // VERIFY TEAR STILL EXISTS
         if (!document.getElementById(tearId)) {
@@ -5865,75 +5934,75 @@ function executeBodyLevelTear(tearData) {
 }
 
 // ========================================================================
-// ENHANCEMENT 4: PROGRESSIVE TEAR INTENSITY BASED ON LIVES
+// PROGRESSIVE TEAR INTENSITY BASED ON LIVES
 // ========================================================================
 function getTearIntensity(livesRemaining) {
     const intensityLevels = {
         5: {
             name: "Gentle Crack",
-            separation: 10,          // REDUCED: was 25, now 10 (24px total)
-            rotation: 6,             // UNCHANGED
-            brightness: 0.95,        // UNCHANGED
-            transitionSpeed: 0.6,    // UNCHANGED
-            separationDuration: 800, // UNCHANGED
-            restorationSpeed: 400,   // UNCHANGED
-            particleCount: 8,        // UNCHANGED
-            soundIntensity: 'low'    // UNCHANGED
+            separation: 2,          // REDUCED: 2 (24px total)
+            rotation: 3,             
+            brightness: 0.95,        
+            transitionSpeed: 0.6,    
+            separationDuration: 500, 
+            restorationSpeed: 300,   
+            particleCount: 8,        
+            soundIntensity: 'low'   
         },
         4: {
             name: "Growing Strain",
-            separation: 12,          // REDUCED: was 35, now 12 (36px total)
-            rotation: 8,             // UNCHANGED
-            brightness: 0.92,        // UNCHANGED
-            transitionSpeed: 0.7,    // UNCHANGED
-            separationDuration: 900, // UNCHANGED
-            restorationSpeed: 450,   // UNCHANGED
-            particleCount: 12,       // UNCHANGED
-            soundIntensity: 'low'    // UNCHANGED
+            separation: 4,          // REDUCED: 4 (36px total)
+            rotation: 4,             
+            brightness: 0.92,        
+            transitionSpeed: 0.7,    
+            separationDuration: 600, 
+            restorationSpeed: 350,   
+            particleCount: 12,       
+            soundIntensity: 'low'    
         },
         3: {
             name: "Serious Tear",
-            separation: 15,          // REDUCED: was 45, now 15 (44px total)
-            rotation: 12,            // UNCHANGED
-            brightness: 0.88,        // UNCHANGED
-            transitionSpeed: 0.8,    // UNCHANGED
-            separationDuration: 1000,// UNCHANGED
-            restorationSpeed: 500,   // UNCHANGED
-            particleCount: 16,       // UNCHANGED
-            soundIntensity: 'medium' // UNCHANGED
+            separation: 6,          // REDUCED: 6 (44px total)
+            rotation: 5,            
+            brightness: 0.88,        
+            transitionSpeed: 0.8,    
+            separationDuration: 700,
+            restorationSpeed: 500,   
+            particleCount: 16,       
+            soundIntensity: 'medium' 
         },
         2: {
             name: "Critical Break",
-            separation: 20,          // REDUCED: was 60, now 20 (60px total)
-            rotation: 16,            // UNCHANGED
-            brightness: 0.82,        // UNCHANGED
-            transitionSpeed: 0.9,    // UNCHANGED
-            separationDuration: 1200,// UNCHANGED
-            restorationSpeed: 550,   // UNCHANGED
-            particleCount: 20,       // UNCHANGED
-            soundIntensity: 'high'   // UNCHANGED
+            separation: 8,          // REDUCED: 8 (60px total)
+            rotation: 6,            
+            brightness: 0.82,        
+            transitionSpeed: 0.9,    
+            separationDuration: 800,
+            restorationSpeed: 550,   
+            particleCount: 20,       
+            soundIntensity: 'high'  
         },
         1: {
             name: "Relationship Crisis",
-            separation: 25,          // REDUCED: was 80, now 25 (80px total)
-            rotation: 22,            // UNCHANGED
-            brightness: 0.75,        // UNCHANGED
-            transitionSpeed: 1.0,    // UNCHANGED
-            separationDuration: 1400,// UNCHANGED
-            restorationSpeed: 600,   // UNCHANGED
-            particleCount: 28,       // UNCHANGED
-            soundIntensity: 'critical'// UNCHANGED
+            separation: 10,          // REDUCED: 10 (80px total)
+            rotation: 8,            
+            brightness: 0.75,        
+            transitionSpeed: 1.0,   
+            separationDuration: 900,
+            restorationSpeed: 600,   
+            particleCount: 28,       
+            soundIntensity: 'critical'
         },
         0: {
             name: "Complete Devastation",
-            separation: 35,          // REDUCED: was 100, now 35 (100px total)
-            rotation: 30,            // UNCHANGED
-            brightness: 0.65,        // UNCHANGED
-            transitionSpeed: 1.2,    // UNCHANGED
-            separationDuration: 1600,// UNCHANGED
-            restorationSpeed: 700,   // UNCHANGED
-            particleCount: 35,       // UNCHANGED
-            soundIntensity: 'critical'// UNCHANGED
+            separation: 12,          // REDUCED: 14 (100px total)
+            rotation: 10,            
+            brightness: 0.65,        
+            transitionSpeed: 1.2,    
+            separationDuration: 1000,
+            restorationSpeed: 700,   
+            particleCount: 35,       
+            soundIntensity: 'critical'
         }
     };
     
@@ -5991,10 +6060,17 @@ function toggleAudio() {
     
     if (audioManager) {
         audioManager.settings.enableSFX = gameState.audioEnabled;
+        
+        // Control background music based on audio toggle
+        if (gameState.audioEnabled) {
+            audioManager.playBackgroundMusic();
+        } else {
+            audioManager.stopBackgroundMusic();
+        }
     }
     
     document.getElementById('audioIcon').textContent = gameState.audioEnabled ? '🔊' : '🔇';
-    console.log(`🔊 Audio ${gameState.audioEnabled ? 'enabled' : 'disabled'}`);
+    console.log(`Audio ${gameState.audioEnabled ? 'enabled' : 'disabled'}`);
     
     if (gameState.audioEnabled && audioManager) {
         setTimeout(() => audioManager.play('eliminate'), 100);
@@ -6532,9 +6608,9 @@ function shareWhatsApp() {
     try {
         // Safety check for data arrays
         if (typeof hinglishTemplates === 'undefined' || typeof coupleSharingTemplates === 'undefined') {
-            console.warn('⚠️ Sharing templates not loaded, using fallback');
+            console.warn('Sharing templates not loaded, using fallback');
             // Fallback to simple sharing
-            const message = `I scored ${gameState.score} points in KamaSutra Endless Embrace! 🎮 Can you beat my score? 😎`;
+            const message = `I scored ${gameState.score} points in KamaSutra Endless Embrace! Can you beat my score?`;
             const url = `https://wa.me/?text=${encodeURIComponent(message + '\n\nPlay here: ' + window.location.href)}`;
             window.open(url, '_blank');
             return;
@@ -6558,7 +6634,8 @@ function shareWhatsApp() {
         } else {
             // Individual sharing with Hinglish templates
             const template = hinglishTemplates[Math.floor(Math.random() * hinglishTemplates.length)];
-            const playTime = gameState.gameStartTime ? Math.floor((Date.now() - gameState.gameStartTime) / 1000) : 0;
+            // Fix: Use stored actual play time instead of recalculating
+            const playTime = gameState.actualPlayTime || 0;
             
             message = template
                 .replace('{score}', gameState.score)
@@ -6570,10 +6647,10 @@ function shareWhatsApp() {
         const url = `https://wa.me/?text=${encodeURIComponent(message + '\n\nPlay here: ' + window.location.href + challengeParam)}`;
         window.open(url, '_blank');
         
-        console.log('📱 WhatsApp sharing initiated');
+        console.log('WhatsApp sharing initiated');
         
     } catch (error) {
-        console.error('❌ WhatsApp sharing failed:', error);
+        console.error('WhatsApp sharing failed:', error);
         // Fallback - show alert with message
         if (typeof message !== 'undefined') {
             alert('Copy this message to share:\n\n' + message);
@@ -6685,4 +6762,4 @@ console.log('✅ All systems integrated and operational');
 
 </script>
 </body>
-</html>
+</html> 
